@@ -21,23 +21,24 @@ function Invoke-SqlFile {
 
 - Migrations directory keeps all the different migrations directories. Migration order is defined by the user function `Get-Migrations` which returns the list of directories that are executed by the given order. This is useful when sort order can't be achieved with file system, i.e. `[version]`, `[date]` etc.
 
-
+```
     ISIB Migrations
         - migration name 1
         - migration name 2
 
         - 3.6.2017
         - 1.1.2015
-
+```
 - Directories - each migration contain of directories and all specified files are executes in those dirs. By default all sql files are included but user can specify both global or per-migration include/exclude.
 
+```
     ISIB Migrations
         - 0.0.1
             - MyFolder1
             - MyFolder2
-
+```
 - Scrips - each migration contains PowerShell scripts that can be executed. Besides that, there are global scripts
-
+```
     Executioners
         SqlPlus
     Scripts
@@ -61,7 +62,7 @@ function Invoke-SqlFile {
                 - AfterMigrationOnce.ps1
                 - script1.ps1
                 - script2.ps1
-
+```
 - Everything has default, or can be overriden.
 - Internnaly Posh5+ classes
 - Gather all files for preprocessing - SAGA plsql case that ignores migrative plsqls on specific migrations. 
