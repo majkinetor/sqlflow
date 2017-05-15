@@ -69,3 +69,4 @@ function Invoke-SqlFile {
 - Hooks for OnFile (used for preprocessing of a file, can return different path or cancel it) and OnFiles (gets the list of all files to be executed in that run and can filter out specific ones or add new ones).
 - Migration.ps1 script with functions like AU perhaps. Perhaps functions instead of scripts (since functions can include scripts).
 - Perpetual folders - Saga plsql case. They do not really fit into migration history per se, history would have to include effective runs rather then list of migration names (option - allow perpetual).
+- Better to use something else then "migration" to avoid confusion - flux, flow, mutation, transformation, shift
