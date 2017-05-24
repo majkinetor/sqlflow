@@ -1,50 +1,25 @@
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Rock');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Jazz');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Metal');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Alternative & Punk');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Rock And Roll');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Blues');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Latin');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Reggae');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Pop');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Soundtrack');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Bossa Nova');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Easy Listening');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Heavy Metal');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'R&B/Soul');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Electronica/Dance');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'World');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Hip Hop/Rap');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Science Fiction');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'TV Shows');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Sci Fi & Fantasy');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Drama');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Comedy');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Alternative');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Classical');
-INSERT INTO genres (GenreId,Name) VALUES (
-NULL,'Opera');
+INSERT INTO genres VALUES(1,'Rock');
+INSERT INTO genres VALUES(2,'Jazz');
+INSERT INTO genres VALUES(3,'Metal');
+INSERT INTO genres VALUES(4,'Alternative & Punk');
+INSERT INTO genres VALUES(5,'Rock And Roll');
+INSERT INTO genres VALUES(6,'Blues');
+INSERT INTO genres VALUES(7,'Latin');
+INSERT INTO genres VALUES(8,'Reggae');
+INSERT INTO genres VALUES(9,'Pop');
+INSERT INTO genres VALUES(10,'Soundtrack');
+INSERT INTO genres VALUES(11,'Bossa Nova');
+INSERT INTO genres VALUES(12,'Easy Listening');
+INSERT INTO genres VALUES(13,'Heavy Metal');
+INSERT INTO genres VALUES(14,'R&B/Soul');
+INSERT INTO genres VALUES(15,'Electronica/Dance');
+INSERT INTO genres VALUES(16,'World');
+INSERT INTO genres VALUES(17,'Hip Hop/Rap');
+INSERT INTO genres VALUES(18,'Science Fiction');
+INSERT INTO genres VALUES(19,'TV Shows');
+INSERT INTO genres VALUES(20,'Sci Fi & Fantasy');
+INSERT INTO genres VALUES(21,'Drama');
+INSERT INTO genres VALUES(22,'Comedy');
+INSERT INTO genres VALUES(23,'Alternative');
+INSERT INTO genres VALUES(24,'Classical');
+INSERT INTO genres VALUES(25,'Opera');
