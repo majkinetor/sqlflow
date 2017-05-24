@@ -1,0 +1,64 @@
+CREATE TABLE "albums"
+(
+    [AlbumId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    [Title] NVARCHAR(160)  NOT NULL,
+    [ArtistId] INTEGER  NOT NULL,
+    FOREIGN KEY ([ArtistId]) REFERENCES "artists" ([ArtistId]) 
+		ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+
+CREATE TABLE "artists"
+(
+    [ArtistId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    [Name] NVARCHAR(120)
+);
+
+
+CREATE TABLE "genres"
+(
+    [GenreId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    [Name] NVARCHAR(120)
+);
+
+CREATE TABLE "media_types"
+(
+    [MediaTypeId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    [Name] NVARCHAR(120)
+);
+
+CREATE TABLE "playlist_track"
+(
+    [PlaylistId] INTEGER  NOT NULL,
+    [TrackId] INTEGER  NOT NULL,
+    CONSTRAINT [PK_PlaylistTrack] PRIMARY KEY  ([PlaylistId], [TrackId]),
+    FOREIGN KEY ([PlaylistId]) REFERENCES "playlists" ([PlaylistId]) 
+		ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY ([TrackId]) REFERENCES "tracks" ([TrackId]) 
+		ON DELETE NO ACTION ON UPDATE NO ACTION
+);
+
+CREATE TABLE "playlists"
+(
+    [PlaylistId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    [Name] NVARCHAR(120)
+);
+
+
+CREATE TABLE "tracks"
+(
+    [TrackId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    [Name] NVARCHAR(200)  NOT NULL,
+    [AlbumId] INTEGER,
+    [MediaTypeId] INTEGER  NOT NULL,
+    [GenreId] INTEGER,
+    [Composer] NVARCHAR(220),
+    [Milliseconds] INTEGER  NOT NULL,
+    [Bytes] INTEGER,
+    [UnitPrice] NUMERIC(10,2)  NOT NULL,
+    FOREIGN KEY ([AlbumId]) REFERENCES "albums" ([AlbumId]) 
+		ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY ([GenreId]) REFERENCES "genres" ([GenreId]) 
+		ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY ([MediaTypeId]) REFERENCES "media_types" ([MediaTypeId]) 
+		ON DELETE NO ACTION ON UPDATE NO ACTION
+);
