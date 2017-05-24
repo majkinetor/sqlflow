@@ -1,4 +1,4 @@
-﻿INSERT INTO genres (GenreId,Name) VALUES (
+INSERT INTO genres (GenreId,Name) VALUES (
 NULL,'Rock');
 INSERT INTO genres (GenreId,Name) VALUES (
 NULL,'Jazz');

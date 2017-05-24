@@ -1,4 +1,4 @@
-﻿INSERT INTO tracks (TrackId,Name,AlbumId,MediaTypeId,GenreId,Composer,Milliseconds,Bytes,UnitPrice) VALUES (
+INSERT INTO tracks (TrackId,Name,AlbumId,MediaTypeId,GenreId,Composer,Milliseconds,Bytes,UnitPrice) VALUES (
 NULL,'For Those About To Rock (We Salute You)',1,1,1,'Angus Young, Malcolm Young, Brian Johnson',343719,11170334,0.99);
 INSERT INTO tracks (TrackId,Name,AlbumId,MediaTypeId,GenreId,Composer,Milliseconds,Bytes,UnitPrice) VALUES (
 NULL,'Balls to the Wall',2,2,1,NULL,342562,5510424,0.99);

@@ -1,4 +1,4 @@
-﻿INSERT INTO playlists (PlaylistId,Name) VALUES (
+INSERT INTO playlists (PlaylistId,Name) VALUES (
 NULL,'Music');
 INSERT INTO playlists (PlaylistId,Name) VALUES (
 NULL,'Movies');

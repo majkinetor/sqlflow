@@ -1,4 +1,4 @@
-﻿INSERT INTO playlist_track (PlaylistId,TrackId) VALUES (
+INSERT INTO playlist_track (PlaylistId,TrackId) VALUES (
 1,3402);
 INSERT INTO playlist_track (PlaylistId,TrackId) VALUES (
 1,3389);

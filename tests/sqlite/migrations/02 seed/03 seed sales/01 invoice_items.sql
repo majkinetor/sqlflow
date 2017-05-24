@@ -1,4 +1,4 @@
-﻿INSERT INTO invoice_items (InvoiceLineId,InvoiceId,TrackId,UnitPrice,Quantity) VALUES (
+INSERT INTO invoice_items (InvoiceLineId,InvoiceId,TrackId,UnitPrice,Quantity) VALUES (
 1,1,2,0.99,1);
 INSERT INTO invoice_items (InvoiceLineId,InvoiceId,TrackId,UnitPrice,Quantity) VALUES (
 2,1,4,0.99,1);

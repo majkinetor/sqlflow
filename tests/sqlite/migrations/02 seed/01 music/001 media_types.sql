@@ -1,4 +1,4 @@
-﻿INSERT INTO media_types (MediaTypeId,Name) VALUES (
+INSERT INTO media_types (MediaTypeId,Name) VALUES (
 NULL,'MPEG audio file');
 INSERT INTO media_types (MediaTypeId,Name) VALUES (
 NULL,'Protected AAC audio file');

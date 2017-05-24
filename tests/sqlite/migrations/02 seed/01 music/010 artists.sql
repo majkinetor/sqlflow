@@ -1,4 +1,4 @@
-﻿INSERT INTO artists (ArtistId,Name) VALUES (
+INSERT INTO artists (ArtistId,Name) VALUES (
 NULL,'AC/DC');
 INSERT INTO artists (ArtistId,Name) VALUES (
 NULL,'Accept');
