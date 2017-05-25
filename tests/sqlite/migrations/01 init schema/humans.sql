@@ -1,3 +1,9 @@
+.echo on
+
+meh
+
+meh2
+
 CREATE TABLE "customers"
 (
     [CustomerId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

@@ -1,27 +1,33 @@
-function Get-Migrations() {
-}
-
 $config = @{
-    Executor        = 'sqlite'
-    HistoryTable    = '_sqlflow_table'
+    Runner         = 'sqlite_shell'
+    HistoryTable   = '_sqlflow_table'
 
-    Directories     = @{
-        Migrations = 'Patches'
-        SqlDirs    = 'ddl', 'dml', 'plsql'
-        PlSqlDir   = 'source\TrezorMaster\TrezorPlsq'
-        Compile    = 'model\COMPILE'
+    # Directories     = @{
+    #     Migrations = 'Patches'
+    #     SqlDirs    = 'ddl', 'dml', 'plsql'
+    #     PlSqlDir   = 'source\TrezorMaster\TrezorPlsq'
+    #     Compile    = 'model\COMPILE'
+    # }
+
+    Directories = @(
+        'migrations'
+    )
+
+    Files = @{
+        Include  = '*.sql'
+        Exclude  = '~*'
     }
 
-    Credentials    = @{
-        admin = 'sys', 'eclaro'
-        user  = 'mof', 'saga'
+    'Get-Migrations' = {
+        ls -Directory $config.Directories
     }
 
     ConnectionStrings = @{
-           user  = "${Hostname}:$Port/$Sid"
-           admin = "${Hostname}:$Port/$Sid as sysdba" 
+        test = "test.db"
     }
 
-    IncludeFiles    = '*.sql', '*.pls'
-    ExcludeFiles    = '~.sql'
+    # ConnectionStrings = @{
+    #     user  = "${Hostname}:$Port/$Sid"
+    #     admin = "${Hostname}:$Port/$Sid as sysdba"
+    # }
 }
