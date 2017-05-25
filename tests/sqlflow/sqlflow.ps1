@@ -1,16 +1,22 @@
 function Get-Migrations() {
+    ls $config.Directories.root
 }
 
 $config = @{
-    Executor      = 'sqlite_shell'
+    Executor      = 'sqlite'
     HistoryTable  = '_sqlflow_history'
 
-    Directories     = @{
-        Migrations = 'Patches'
-        SqlDirs    = 'ddl', 'dml', 'plsql'
-        PlSqlDir   = 'source\TrezorMaster\TrezorPlsq'
-        Compile    = 'model\COMPILE'
+    # Directories     = @{
+    #     Migrations = 'Patches'
+    #     SqlDirs    = 'ddl', 'dml', 'plsql'
+    #     PlSqlDir   = 'source\TrezorMaster\TrezorPlsq'
+    #     Compile    = 'model\COMPILE'
+    # }
+
+    Directories = @{
+        root    = 'migrations'
     }
+
 
     Credentials    = @{
         admin = 'sys', 'eclaro'

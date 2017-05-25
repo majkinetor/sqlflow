@@ -3,7 +3,7 @@ function Get-Migrations() {
 
 $config = @{
     Executor        = 'sqlite'
-    MigrationTable  = '_migration_history'
+    HistoryTable    = '_sqlflow_table'
 
     Directories     = @{
         Migrations = 'Patches'
