@@ -1,5 +1,5 @@
 
-test error
+test error;
 
 CREATE TABLE "customers"
 (

@@ -24,4 +24,5 @@ import-module -force ..\..\sqlflow.psm1
 $VerbosePreference = 'continue'
 
 pushd $PSScriptRoot
+rm test.db
 Invoke-Flow -FlowConfig $config
