@@ -1,28 +1,41 @@
 function Invoke-Flow( [HashTable]$FlowConfig ) {
 
-    $script:config = $FlowConfig.Clone()
-    if ( !$config.Directories) { $config.Directories = @('migrations') }
-    if ( !$config.Migrations ) { $config.Migrations = { ls -Directory $config.Directories } }
+    set-Config $FlowConfig
+    
     $migrations = . $Config.Migrations
+    $files  = get-MigrationFiles $migrations
 
     $csFirst = $config.Connections.Keys | select -First 1
     if (!$csFirst) { throw "No connection found" }
     $runner = New-Runner $config.Runner $config.Connections.$csFirst
 
-    $files = foreach ($migration in $migrations) { 
-       $f = $migration | ls -File -Recurse 
-       if (!$config.Files) { continue }
-       if ($config.Files.Include) { $f = $f | ? FullName -like $config.Files.Include }
-       if ($config.Files.Exclude) { $f = $f | ? FullName -notlike $config.Files.Exclude }
-       $f
-    }  
-    
+    run-Files $runner $files
+}
+
+function set-Config([HashTable] $UserConfig) {
+    $script:config = $UserConfig.Clone()
+    if ( !$config.Directories) { $config.Directories = @('migrations') }
+    if ( !$config.Migrations ) { $config.Migrations = { ls -Directory $config.Directories } }
+}
+
+function run-Files( $runner, $Files ) {
     foreach ($file in $files) {
         $file.FullName
         $out, $err = $runner.RunFile( $file.FullName )
         if ($err.Count) { @("$($err.Count) errors:") + $err | Write-Warning }
         $out
     }
+}
+
+function get-MigrationFiles( $Migrations ) {
+    $files = foreach ($migration in $Migrations) { 
+       $f = $migration | ls -File -Recurse 
+       if (!$script:config.Files) { continue }
+       if ($script:config.Files.Include) { $f = $f | ? FullName -like $script:config.Files.Include }
+       if ($script:config.Files.Exclude) { $f = $f | ? FullName -notlike $script:config.Files.Exclude }
+       $f
+    }  
+    $files
 }
 
 function New-Runner( [string]$Name, $Connection ) {
@@ -35,4 +48,7 @@ function New-Runner( [string]$Name, $Connection ) {
     try { . $runner_script } catch { throw "Runner loading error: $_" }
 
     iex "[$Name]::new( `$Connection )"
-}
+}   
+
+
+Export-ModuleMember -Function 'Invoke-Flow', 'New-Runner'

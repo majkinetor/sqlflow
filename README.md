@@ -72,3 +72,9 @@ function Invoke-SqlFile {
 - Perpetual folders - Saga plsql case. They do not really fit into migration history per se, history would have to include effective runs rather then list of migration names (option - allow perpetual).
 - Prvih nekoliko redova moze da sadrzi 'sqlflow' komentar
     -- sqlflow: exclude; connection: admin; runer: sqlite_shell 
+
+---
+
+Facts 
+
+- Migration is a directory, set of migrations is ordered list of directories.
