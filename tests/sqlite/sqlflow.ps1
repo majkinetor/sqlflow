@@ -15,8 +15,8 @@ $config = @{
     #      ls -Directory $config.Directories
     # }
 
-    ConnectionStrings = [ordered]@{
-        test   = "test.db"
+    Connections = [ordered]@{
+        test = "test.db"
     }
 }
 
@@ -24,5 +24,5 @@ import-module -force ..\..\sqlflow.psm1
 $VerbosePreference = 'continue'
 
 pushd $PSScriptRoot
-rm test.db
+rm test.db -ea 0
 Invoke-Flow -FlowConfig $config

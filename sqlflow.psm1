@@ -1,22 +1,13 @@
 function Invoke-Flow( [HashTable]$FlowConfig ) {
 
-    $config = $FlowConfig.Clone()
+    $script:config = $FlowConfig.Clone()
     if ( !$config.Directories) { $config.Directories = @('migrations') }
     if ( !$config.Migrations ) { $config.Migrations = { ls -Directory $config.Directories } }
     $migrations = . $Config.Migrations
 
-    if (!$config.Runner) { throw 'No runner specified' }
-    $runner_script = "$PSScriptRoot/runners/{0}.ps1" -f $config.Runner
-    if (!(Test-Path $runner_script )) { throw "Runner not found: $config.Runner"}
-    try { . $runner_script } catch { throw "Runner loading error: $_" }
-
-    $csFirst = $config.ConnectionStrings.Keys | select -First 1
-    if (!$csFirst)  { throw "No connection string found" }
-    $csFirst = $config.ConnectionStrings.$csFirst
-
-    Write-Verbose "Creating runner instance"
-    $e = '[{0}]::new( "{1}" )' -f $config.Runner, $csFirst
-    $script:runner = iex $e
+    $csFirst = $config.Connections.Keys | select -First 1
+    if (!$csFirst) { throw "No connection found" }
+    $runner = New-Runner $config.Runner $config.Connections.$csFirst
 
     $files = foreach ($migration in $migrations) { 
        $f = $migration | ls -File -Recurse 
@@ -28,9 +19,20 @@ function Invoke-Flow( [HashTable]$FlowConfig ) {
     
     foreach ($file in $files) {
         $file.FullName
-        $out, $err = $script:runner.RunFile( $file.FullName )
+        $out, $err = $runner.RunFile( $file.FullName )
         if ($err.Count) { @("$($err.Count) errors:") + $err | Write-Warning }
         $out
     }
+}
 
+function New-Runner( [string]$Name, $Connection ) {
+    if ([string]::IsNullOrEmpty($Name)) { throw "Runner name can't be blank" }
+    Write-Verbose "New runner instance: $Name"
+
+    $runner_script = "$PSScriptRoot\runners\$Name.ps1"
+    if (!(Test-Path $runner_script )) { throw "Runner not found: $Name"}
+
+    try { . $runner_script } catch { throw "Runner loading error: $_" }
+
+    iex "[$Name]::new( `$Connection )"
 }

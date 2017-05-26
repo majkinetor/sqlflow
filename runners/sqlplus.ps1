@@ -6,8 +6,8 @@ function Invoke-SqlFile {
         # Arguments to the script
         [string[]] $Arguments,
         
-        # Connection string
-        [string] $ConnectionString
+        # Connection object
+        $Connection
 
     )
 
