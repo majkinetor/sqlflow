@@ -1,8 +1,5 @@
-.echo on
 
-meh
-
-meh2
+test error
 
 CREATE TABLE "customers"
 (

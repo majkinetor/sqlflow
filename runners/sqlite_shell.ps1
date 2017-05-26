@@ -18,7 +18,7 @@ class sqlite_shell {
         # This looks like Powershell 5 bug, should try in 6 if its resolved
         Write-Verbose "RunFile: $cmd"
         $out = cmd.exe /C $cmd
-        $errors = (gc $this.ErrorFile) -replace '^Error: '
+        $errors = gc $this.ErrorFile
         return $out, $errors
     }
 }
