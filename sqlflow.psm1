@@ -30,7 +30,7 @@ function set-Config([HashTable] $UserConfig) {
 }
 
 function run-Files( $handler, $MigrationFiles ) {
-    $stats = [ordered]@{ Time = ''; Files = 0; Errors = 0 }
+    $stats = [ordered]@{ Time = 0; Migrations = 0; Files = 0; Errors = 0 }
     foreach ($mf in $MigrationFiles) 
     { 
         $fcount = $mf.files.Count
@@ -51,7 +51,8 @@ function run-Files( $handler, $MigrationFiles ) {
         $stats.errors += $migration_errors
     }
 
-    log -Header ("`nFinished {0} migrations" -f $mf.Count)
+    log -Header "`nSummary"
+    $stats.migrations = $mf.Count
     $stats.time = ( (Get-Date) - $script:startTime ).TotalMinutes.ToString("#.##") + ' minutes'
     $stats.Keys | % { log "  $(${_}.PadRight(15)) $($stats.$_)"}
 }
