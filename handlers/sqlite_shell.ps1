@@ -1,18 +1,23 @@
 class sqlite_shell {
-    [string] $ConnectionString
+    [string] $DatabasePath
 
     hidden [string] $errorFile = "$Env:TEMP\sqlflow\sqlite_shell.err"
     hidden [string] $exeName   = 'sqlite3'
 
-    sqlite_shell( [string] $ConnectionSting ) {
+    sqlite_shell( [string] $Connection ) {
         if (!(gcm $this.exeName -ea 0)) { throw "$($this.exeName) not found on the PATH" }
-        $this.ConnectionString = $ConnectionSting
-        Write-Verbose "Using sqlite_shell with database: $ConnectionSting"
+        $this.DatabasePath = $Connection
+        Write-Verbose "Using sqlite_shell with database: $Connection"
+    }
+
+    RemoveDatabase() {
+        rm $this.DatabasePath -ea 0
+        if (Test-Path $this.DatabasePath) { rm $this.DatabasePath }
     }
 
     [array] RunFile( [string] $SqlFilePath ) {
 
-        $cmd = "{0} {1} "".read '{2}'"" 2>{3}" -f  $this.exeName, $this.ConnectionString, $SqlFilePath, $this.errorFile
+        $cmd = "{0} {1} "".read '{2}'"" 2>{3}" -f  $this.exeName, $this.DatabasePath, $SqlFilePath, $this.errorFile
 
         # Execute via cmd.exe as errors messages are cut in the middle without cmd.exe
         # This looks like Powershell 5 bug, should try in 6 if its resolved

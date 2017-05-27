@@ -1,5 +1,6 @@
 $config = @{
-    Runner         = 'sqlite_shell'
+    DateFormat     = 's'
+    Handler        = 'sqlite_shell'
     HistoryTable   = '_sqlflow_table'
 
     Directories = @(
@@ -20,9 +21,9 @@ $config = @{
     }
 }
 
-import-module -force ..\..\sqlflow.psm1
-$VerbosePreference = 'continue'
+
+#$VerbosePreference = 'continue'
 
 pushd $PSScriptRoot
-rm test.db -ea 0
-Invoke-Flow -FlowConfig $config
+import-module -force ..\..\sqlflow.psm1
+Invoke-Flow -FlowConfig $config -Reset
