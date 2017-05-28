@@ -3,7 +3,7 @@ CREATE TABLE "_sqlflow_history" (
 	StartDate  varchar,
 	EndDate    varchar,
 	Config     varchar,
-	Hashes     varchar,
+	Migrations varchar,
 	Changes    varchar,
 	Result	   varchar
 );

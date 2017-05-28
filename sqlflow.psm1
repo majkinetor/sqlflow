@@ -13,8 +13,8 @@ function Invoke-Flow {
     $info.startDate = Get-Date
     log ( "Started {0} version {1}`n  at {2}`n  by {3}`n" -f $module.Name, $module.Version, $info.startDate.ToString($config.DateFormat), "$Env:USERDOMAIN\$Env:USERNAME@$Env:COMPUTERNAME" )
     
-    $migrations = . $Config.Migrations
-    $mf  = get-MigrationFiles $migrations
+    $migrations = . $Config.Migrations | ? Name -ne 'sqlflow'
+    $info.migrations  = get-MigrationFiles $migrations 
 
     $csFirst = $config.Connections.Keys | select -First 1
     if (!$csFirst) { throw "No connection found" }
@@ -24,8 +24,8 @@ function Invoke-Flow {
     ###############
 
     init_history $handler
-    $mf = get-Changes $handler $mf
-    run-Files $handler $mf
+    get-Changes $handler
+    run-Files $handler
 }
 
 function set-Config([HashTable] $UserConfig) {
@@ -34,35 +34,37 @@ function set-Config([HashTable] $UserConfig) {
     if ( !$config.Migrations ) { $config.Migrations = { ls -Directory $config.Directories } }
 }
 
-function run-Files( $handler, $MigrationFiles ) {
+function run-Files( $handler ) {
     $stats = [ordered]@{ Time = 0; Migrations = 0; Files = 0; Errors = 0 }
-    foreach ($mf in $MigrationFiles) 
+    foreach ($m in $info.migrations) 
     { 
-        $fcount = $mf.files.Count
+        $fcount = $m.files.Count
         $migration_errors = 0
         $start = Get-Date
-        log -Header '',("Starting migration '{0}' - {1} files" -f $mf.migration.Name, $fcount  )
-        for ($i=1; $i -le $mf.files.Count; $i++)
+        log -Header '',("Starting migration '{0}' - {1} files" -f $m.Name, $fcount  )
+        for ($i=1; $i -le $fcount; $i++)
         {
-            $file = $mf.files[$i-1]          
-            log ('{0}/{1} {2}' -f "$i".PadLeft(3), "$fcount".PadRight(3), $file.FullName)
-            $out, $err = $handler.RunFile( $file.FullName )
+            $file_path = $m.files[$i-1].Path         
+            log ('{0}/{1} {2}' -f "$i".PadLeft(3), "$fcount".PadRight(3), $file_path)
+            $out, $err = $handler.RunFile( $file_path )
             if ($err.Count) { @("Errors: $($err.Count)") + $err | Write-Warning }
             $migration_errors += $err.Count
             $out
         }
-        log -Header ( "Finished migration '{0}' after {1:f2} minutes - errors: {2}" -f $mf.migration.Name, ((Get-Date)-$start).TotalMinutes, $migration_errors)
+        log -Header ( "Finished migration '{0}' after {1:f2} minutes - errors: {2}" -f $m.Name, ((Get-Date)-$start).TotalMinutes, $migration_errors)
         $stats.files  += $fcount
         $stats.errors += $migration_errors
     }
 
     log -Header "`nSummary"
-    $stats.migrations = $mf.Count
+    $stats.migrations = $info.migrations.Count
     $stats.time = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
     $stats.Keys | % { log "  $(${_}.PadRight(15)) $($stats.$_)"}
 }
 
 function get-MigrationFiles( $Migrations ) {
+    log "Setting up migrations"
+
     $mf = foreach ($migration in $Migrations) { 
        $f = $migration | ls -File -Recurse 
        if (!$script:config.Files) { continue }
@@ -70,7 +72,10 @@ function get-MigrationFiles( $Migrations ) {
        if ($script:config.Files.Exclude) { $f = $f | ? FullName -notlike $script:config.Files.Exclude }
 
        if ($f.Count -eq 0) { Write-Warning "Empty migration: $migration"; continue }
-       @{ migration = $migration; files = $f }
+       @{ 
+           name  = Split-Path -Leaf $migration
+           files = $f | Get-FileHash -Algorithm MD5 | select Path, Hash
+        }
     }  
     $mf
 }
@@ -100,28 +105,25 @@ function init_history($Handler) {
     if ( $err ) { throw "Error creating history table: $err" }
 }
 
-function insup_history ($Handler, $EndDate='NULL', $Hashes, $Changes='NULL', $Result='NULL') {
-    function q($s) { $s.Replace("'", "''") | Out-String }
+function add_history ($Handler, $EndDate='NULL', $Changes='NULL', $Result='NULL') {
+    function q($s) { $s.Replace("'", "''") }
 
     $out, $err = $Handler.RunSql(@"
 INSERT INTO $history_table
-(RunId, StartDate, EndDate, Config, Hashes, Changes, Result)
+(RunId, StartDate, EndDate, Config, Migrations, Changes, Result)
 VALUES(
-    $($info.RunId),                         -- RunId
-    '$($info.startDate.ToString("s"))',     -- StartDate
-    $EndDate                                -- EndDate
-    '$( q ($config | ConvertTo-Json) )',    -- Config
-    '$( q $Hashes)',                        -- Hashes
-    '$Changes,                              -- Changes
-    '$( q $Result)',                        -- Result
+    $($info.RunId),                                 -- RunId
+    '$($info.startDate.ToString("s"))',             -- StartDate
+    $EndDate,                                       -- EndDate
+    '$( q ($config | ConvertTo-Json) )',            -- Config
+    '$( q ($info.migrations | ConvertTo-Json))',    -- Migrations
+    '$Changes',                                     -- Changes
+    '$( q $Result)')                                 -- Result
 "@)
     if ($err) {throw "Can't get history record: $err"}
 }
 
-function get-Changes( $Handler, $mf ) {
-
-    log "Calculating cheksums"
-    $hashes = $mf.files | Get-FileHash -Algorithm MD5 | ConvertTo-Csv  -NoTypeInformation
+function get-Changes( $Handle ) {
 
     log "Getting history"
     $out, $err = $Handler.RunSql( ('select * from {0} where RunId = (select max(RunId) from {0})' -f $history_table) )
@@ -129,7 +131,7 @@ function get-Changes( $Handler, $mf ) {
     if (!$out) { 
         $info.RunId = 1
         log "No history found, all migrations will be applied"
-        insup_history $Handler -Hashes $hashes   
+        add_history $Handler -Hashes $hashes
     }
 }
 
