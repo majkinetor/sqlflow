@@ -8,9 +8,10 @@ function Invoke-Flow {
     )
 
     set-Config $FlowConfig
+    $script:info = @{}
     
-    $script:startTime = Get-Date
-    log ( "Started {0} version {1}`n  at {2}`n  by {3}`n" -f $module.Name, $module.Version, $startTime.ToString($config.DateFormat), "$Env:USERDOMAIN\$Env:USERNAME@$Env:COMPUTERNAME" )
+    $info.startDate = Get-Date
+    log ( "Started {0} version {1}`n  at {2}`n  by {3}`n" -f $module.Name, $module.Version, $info.startDate.ToString($config.DateFormat), "$Env:USERDOMAIN\$Env:USERNAME@$Env:COMPUTERNAME" )
     
     $migrations = . $Config.Migrations
     $mf  = get-MigrationFiles $migrations
@@ -20,6 +21,9 @@ function Invoke-Flow {
     $handler = New-Handler $config.Handler $config.Connections.$csFirst
     if ( $Reset ) {  Write-Warning "Reseting database"; $handler.RemoveDatabase() }
 
+    ###############
+
+    init_history $handler
     $mf = get-Changes $handler $mf
     run-Files $handler $mf
 }
@@ -54,7 +58,7 @@ function run-Files( $handler, $MigrationFiles ) {
 
     log -Header "`nSummary"
     $stats.migrations = $mf.Count
-    $stats.time = ( (Get-Date) - $script:startTime ).TotalMinutes.ToString("#.##") + ' minutes'
+    $stats.time = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
     $stats.Keys | % { log "  $(${_}.PadRight(15)) $($stats.$_)"}
 }
 
@@ -88,18 +92,41 @@ function log($msg, [switch] $Header, [switch] $NoNewLine ) {
     $msg | Write-Host
 }
 
+function init_history($Handler) {
+    if ( $Handler.TableExists( $script:history_table ) ) { return }
+
+    Write-Warning "History table doesn't exist, creating it"
+    $_, $err = $Handler.RunFile('migrations\sqlflow\_sqlflow_history.sql')
+    if ( $err ) { throw "Error creating history table: $err" }
+}
+
 function get-Changes( $Handler, $mf ) {
+    function q($s) { $s.Replace("'", "''") | Out-String }
 
-    log "Calculating cheksums ..."
-    $hashes = $mf.files | Get-FileHash -Algorithm MD5 | ConvertTo-Csv
+    log "Calculating cheksums"
+    $hashes = $mf.files | Get-FileHash -Algorithm MD5 | ConvertTo-Csv  -NoTypeInformation
 
-    if ( !$Handler.TableExists( $script:history_table ) ) {
-        Write-Warning "History table doesn't exist, creating it"
-        $_, $err = $Handler.RunFile('migrations\sqlflow\_sqlflow_history.sql')
-        if ( $err ) { throw "Error creating history table: $err" }
+    log "Getting history"
+    $out, $err = $Handler.RunSql( ('select * from {0} where RunId = (select max(RunId) from {0})' -f $history_table) )
+    if ($err) {throw "Can't get history record: $err"}
+    if (!$out) { 
+        $info.RunId = 1
+        log "No history found, all migrations will be applied"
+        $out, $err = $Handler.RunSql(@"
+            INSERT INTO $history_table
+            (RunId, StartDate, EndDate, Config, Hashes, Changes, Result)
+            VALUES(
+                $($info.RunId),                         -- RunId
+                '$($info.startDate.ToString("s"))',     -- StartDate
+                NULL                                    -- EndDate
+                '$( q ($config | ConvertTo-Json) )',    -- Config
+                '$( q $Hashes)',                        -- Hashes
+                'NULL',                                 -- Changes
+                'NULL')                                 -- Result
+"@)
+        if ($err) {throw "Can't get history record: $err"}
+        
     }
-
-
 }
 
 $module        = $MyInvocation.MyCommand.ScriptBlock.Module

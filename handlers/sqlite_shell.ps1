@@ -36,10 +36,12 @@ class sqlite_shell {
     # Return ($out, $err)
     # Output must be in csv format
     [array] RunSql ( [string] $Sql ) {
-        $Sql = ".mode csv`n$Sql"
+        $Sql = ".header on`n.mode csv`n$Sql"
         $sqlFile = Join-Path $this.tmpdir "runsql.sql"
         [IO.File]::WriteAllLines($sqlFile, $Sql) # we don't want BOM
-        return $this.RunFile( $sqlFile )
+        $out, $err = $this.RunFile( $sqlFile )
+        if ($out) { $out = $out | ConvertFrom-CSV }
+        return $out, $err
     }
 
     # Returns if table exists 
