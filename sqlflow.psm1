@@ -20,6 +20,7 @@ function Invoke-Flow {
     $handler = New-Handler $config.Handler $config.Connections.$csFirst
     if ( $Reset ) {  Write-Warning "Reseting database"; $handler.RemoveDatabase() }
 
+    $mf = get-Changes $handler $mf
     run-Files $handler $mf
 }
 
@@ -87,6 +88,21 @@ function log($msg, [switch] $Header, [switch] $NoNewLine ) {
     $msg | Write-Host
 }
 
+function get-Changes( $Handler, $mf ) {
 
-$script:module = $MyInvocation.MyCommand.ScriptBlock.Module
+    log "Calculating cheksums ..."
+    $hashes = $mf.files | Get-FileHash -Algorithm MD5 | ConvertTo-Csv
+
+    if ( !$Handler.TableExists( $script:history_table ) ) {
+        Write-Warning "History table doesn't exist, creating it"
+        $_, $err = $Handler.RunFile('migrations\sqlflow\_sqlflow_history.sql')
+        if ( $err ) { throw "Error creating history table: $err" }
+    }
+
+
+}
+
+$module        = $MyInvocation.MyCommand.ScriptBlock.Module
+$history_table = '_sqlflow_history'
+
 Export-ModuleMember -Function 'Invoke-Flow', 'New-Handler'

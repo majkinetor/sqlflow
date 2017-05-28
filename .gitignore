@@ -1,1 +1,2 @@
 /tests/sqlite/test.db
+/tests/sqlite/*.db

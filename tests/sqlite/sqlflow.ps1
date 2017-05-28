@@ -1,7 +1,6 @@
 $config = @{
     DateFormat     = 's'
     Handler        = 'sqlite_shell'
-    HistoryTable   = '_sqlflow_table'
 
     Directories = @(
         'migrations'
