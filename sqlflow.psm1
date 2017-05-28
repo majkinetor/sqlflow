@@ -27,7 +27,7 @@ function Invoke-Flow {
 
     add_history $handler
     run-Files $handler
-    update_history
+    update_history $handler
 }
 
 function set-Config([HashTable] $UserConfig) {
