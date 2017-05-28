@@ -100,8 +100,25 @@ function init_history($Handler) {
     if ( $err ) { throw "Error creating history table: $err" }
 }
 
-function get-Changes( $Handler, $mf ) {
+function insup_history ($Handler, $EndDate='NULL', $Hashes, $Changes='NULL', $Result='NULL') {
     function q($s) { $s.Replace("'", "''") | Out-String }
+
+    $out, $err = $Handler.RunSql(@"
+INSERT INTO $history_table
+(RunId, StartDate, EndDate, Config, Hashes, Changes, Result)
+VALUES(
+    $($info.RunId),                         -- RunId
+    '$($info.startDate.ToString("s"))',     -- StartDate
+    $EndDate                                -- EndDate
+    '$( q ($config | ConvertTo-Json) )',    -- Config
+    '$( q $Hashes)',                        -- Hashes
+    '$Changes,                              -- Changes
+    '$( q $Result)',                        -- Result
+"@)
+    if ($err) {throw "Can't get history record: $err"}
+}
+
+function get-Changes( $Handler, $mf ) {
 
     log "Calculating cheksums"
     $hashes = $mf.files | Get-FileHash -Algorithm MD5 | ConvertTo-Csv  -NoTypeInformation
@@ -112,20 +129,7 @@ function get-Changes( $Handler, $mf ) {
     if (!$out) { 
         $info.RunId = 1
         log "No history found, all migrations will be applied"
-        $out, $err = $Handler.RunSql(@"
-            INSERT INTO $history_table
-            (RunId, StartDate, EndDate, Config, Hashes, Changes, Result)
-            VALUES(
-                $($info.RunId),                         -- RunId
-                '$($info.startDate.ToString("s"))',     -- StartDate
-                NULL                                    -- EndDate
-                '$( q ($config | ConvertTo-Json) )',    -- Config
-                '$( q $Hashes)',                        -- Hashes
-                'NULL',                                 -- Changes
-                'NULL')                                 -- Result
-"@)
-        if ($err) {throw "Can't get history record: $err"}
-        
+        insup_history $Handler -Hashes $hashes   
     }
 }
 
