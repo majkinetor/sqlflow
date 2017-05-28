@@ -13,8 +13,7 @@ function Invoke-Flow {
     $info.startDate = Get-Date
     log ( "Started {0} version {1}`n  at {2}`n  by {3}`n" -f $module.Name, $module.Version, $info.startDate.ToString($config.DateFormat), "$Env:USERDOMAIN\$Env:USERNAME@$Env:COMPUTERNAME" )
     
-    $migrations = . $Config.Migrations | ? Name -ne 'sqlflow'
-    $info.migrations  = get-MigrationFiles $migrations 
+    get-MigrationFiles
 
     $csFirst = $config.Connections.Keys | select -First 1
     if (!$csFirst) { throw "No connection found" }
@@ -25,7 +24,10 @@ function Invoke-Flow {
 
     init_history $handler
     get-Changes $handler
+
+    add_history $handler
     run-Files $handler
+    update_history
 }
 
 function set-Config([HashTable] $UserConfig) {
@@ -35,8 +37,9 @@ function set-Config([HashTable] $UserConfig) {
 }
 
 function run-Files( $handler ) {
+
     $stats = [ordered]@{ Time = 0; Migrations = 0; Files = 0; Errors = 0 }
-    foreach ($m in $info.migrations) 
+    foreach ($m in $info.changes) 
     { 
         $fcount = $m.files.Count
         $migration_errors = 0
@@ -58,14 +61,15 @@ function run-Files( $handler ) {
 
     log -Header "`nSummary"
     $stats.migrations = $info.migrations.Count
-    $stats.time = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
+    $stats.duration = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
     $stats.Keys | % { log "  $(${_}.PadRight(15)) $($stats.$_)"}
 }
 
-function get-MigrationFiles( $Migrations ) {
+function get-MigrationFiles() {
     log "Setting up migrations"
 
-    $mf = foreach ($migration in $Migrations) { 
+    $migrations = . $config.Migrations | ? Name -ne 'sqlflow'
+    $info.migrations = foreach ($migration in $migrations) { 
        $f = $migration | ls -File -Recurse 
        if (!$script:config.Files) { continue }
        if ($script:config.Files.Include) { $f = $f | ? FullName -like $script:config.Files.Include }
@@ -76,8 +80,7 @@ function get-MigrationFiles( $Migrations ) {
            name  = Split-Path -Leaf $migration
            files = $f | Get-FileHash -Algorithm MD5 | select Path, Hash
         }
-    }  
-    $mf
+    } 
 }
 
 function New-Handler( [string]$Name, $Connection ) {
@@ -105,20 +108,29 @@ function init_history($Handler) {
     if ( $err ) { throw "Error creating history table: $err" }
 }
 
-function add_history ($Handler, $EndDate='NULL', $Changes='NULL', $Result='NULL') {
-    function q($s) { $s.Replace("'", "''") }
+function update_history($Handler) {
+    $out, $err = $Handler.RunSql(@"
+        UPDATE $history_table
+        SET Duration = '$($info.duration)', 
+            Result = 'todo'
+        WHERE RunId = $($info.RunId)
+"@)
+    if ($err) {throw "Can't update history record: $err"}
+
+}
+
+function add_history ($Handler ) {
+    function json($o) { ($o | ConvertTo-Json).Replace("'", "''") }
 
     $out, $err = $Handler.RunSql(@"
 INSERT INTO $history_table
-(RunId, StartDate, EndDate, Config, Migrations, Changes, Result)
-VALUES(
-    $($info.RunId),                                 -- RunId
-    '$($info.startDate.ToString("s"))',             -- StartDate
-    $EndDate,                                       -- EndDate
-    '$( q ($config | ConvertTo-Json) )',            -- Config
-    '$( q ($info.migrations | ConvertTo-Json))',    -- Migrations
-    '$Changes',                                     -- Changes
-    '$( q $Result)')                                 -- Result
+    (RunId, StartDate, Config, Migrations, Changes)
+VALUES( 
+     $($info.RunId),                        -- RunId
+    '$($info.startDate.ToString("s"))',     -- StartDate
+    '$( json $config )',                    -- Config
+    '$( json $info.migrations)',            -- Migrations
+    '$( json $info.Changes)')               -- Changes
 "@)
     if ($err) {throw "Can't get history record: $err"}
 }
@@ -131,7 +143,7 @@ function get-Changes( $Handle ) {
     if (!$out) { 
         $info.RunId = 1
         log "No history found, all migrations will be applied"
-        add_history $Handler -Hashes $hashes
+        $info.changes = $info.migrations
     }
 }
 

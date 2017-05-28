@@ -1,2 +1,3 @@
 /tests/sqlite/test.db
 /tests/sqlite/*.db
+/tests/sqlite/*.db-journal
