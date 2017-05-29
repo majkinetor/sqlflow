@@ -6,7 +6,10 @@ $s = {
     git_4windows
 
     pester
-    cinst sqlite
+    
+    # databases 
+    #cinst sqlite
+    #choco install sql-server-express #without full sqlserver: cinst sqlserver-cmdlineutils
 }
 
 function git_4windows() {

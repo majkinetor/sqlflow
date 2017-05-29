@@ -1,12 +1,12 @@
 param ([switch] $Reset )
 
 $config = @{
-    DateFormat     = 's'
+    # DateFormat     = 's'
     Handler        = 'sqlite_shell'
 
-    Directories = @(
-        'migrations'
-    )
+    # Directories = @(
+    #     'migrations'
+    # )
 
     Files = @{
         Include  = '*.sql'

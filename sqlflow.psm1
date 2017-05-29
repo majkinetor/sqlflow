@@ -32,8 +32,10 @@ function Invoke-Flow {
 
 function set-Config([HashTable] $UserConfig) {
     $script:config = $UserConfig.Clone()
-    if ( !$config.Directories) { $config.Directories = @('migrations') }
-    if ( !$config.Migrations ) { $config.Migrations = { ls -Directory $config.Directories } }
+    if ( !$config.Directories)      { $config.Directories = @('migrations') }
+    if ( !$config.Migrations )      { $config.Migrations = { ls -Directory $config.Directories } }
+    if ( !$config.Files)            { $config.Files = @{ Include = '*.sql'} }
+    if ( !$config.Files.Include )   { $config.Files.Include = '*.sql' }
 }
 
 function run-Files( $handler ) {
@@ -69,7 +71,9 @@ function run-Files( $handler ) {
 function get-MigrationFiles() {
     log "Setting up migrations"
 
-    $migrations = . $config.Migrations | ? Name -ne 'sqlflow'
+    $migrations = . $config.Migrations
+    $info.sqlflow_migration = $migrations | ? Name -eq 'sqlflow'
+    $migrations = $migrations | ? Name -ne 'sqlflow'
     $info.migrations = foreach ($migration in $migrations) { 
        $f = $migration | ls -File -Recurse 
        if (!$script:config.Files) { continue }
@@ -80,6 +84,8 @@ function get-MigrationFiles() {
        if ($f.Count -eq 0) { Write-Warning "Empty migration: $migration"; continue }
        $f | Get-FileHash -Algorithm MD5 | select @{ N='migration'; E={$name} }, Path, Hash
     } 
+
+    if ( !$info.migrations ) {throw 'No migration found'}
 }
 
 function New-Handler( [string]$Name, $Connection ) {
@@ -103,7 +109,8 @@ function init_history($Handler) {
     if ( $Handler.TableExists( $script:history_table ) ) { return }
 
     Write-Warning "History table doesn't exist, creating it"
-    $_, $err = $Handler.RunFile('migrations\sqlflow\_sqlflow_history.sql')
+    if (!$info.sqlflow_migration) { throw "there is no 'sqlflow' migration" }
+    $_, $err = $Handler.RunFile( (Join-Path $info.sqlflow_migration '_sqlflow_history.sql') )
     if ( $err ) { throw "Error creating history table: $err" }
 }
 
