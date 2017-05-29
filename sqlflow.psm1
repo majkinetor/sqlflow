@@ -38,31 +38,32 @@ function set-Config([HashTable] $UserConfig) {
 
 function run-Files( $handler ) {
 
-    $stats = [ordered]@{ Time = 0; Migrations = 0; Files = 0; Errors = 0 }
-    foreach ($m in $info.changes) 
+    $info.stats = [ordered]@{ Duration = 0; Migrations = 0; Files = 0; Errors = 0 }
+
+    $migrations = $info.changes | group migration
+    foreach ($m in $migrations) 
     { 
-        $fcount = $m.files.Count
         $migration_errors = 0
         $start = Get-Date
-        log -Header '',("Starting migration '{0}' - {1} files" -f $m.Name, $fcount  )
-        for ($i=1; $i -le $fcount; $i++)
+        log -Header '',("Starting migration '{0}' - {1} files" -f $m.Name, $m.Count  )
+        for ($i=1; $i -le $m.Count; $i++)
         {
-            $file_path = $m.files[$i-1].Path         
-            log ('{0}/{1} {2}' -f "$i".PadLeft(3), "$fcount".PadRight(3), $file_path)
+            $file_path = $m.group[$i-1].Path         
+            log ('{0}/{1} {2}' -f "$i".PadLeft(3), "$($m.Count)".PadRight(3), $file_path)
             $out, $err = $handler.RunFile( $file_path )
             if ($err.Count) { @("Errors: $($err.Count)") + $err | Write-Warning }
             $migration_errors += $err.Count
             $out
         }
         log -Header ( "Finished migration '{0}' after {1:f2} minutes - errors: {2}" -f $m.Name, ((Get-Date)-$start).TotalMinutes, $migration_errors)
-        $stats.files  += $fcount
-        $stats.errors += $migration_errors
+        $info.stats.files  += $m.Count
+        $info.stats.errors += $migration_errors
     }
 
     log -Header "`nSummary"
-    $stats.migrations = $info.migrations.Count
-    $stats.duration = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
-    $stats.Keys | % { log "  $(${_}.PadRight(15)) $($stats.$_)"}
+    $info.stats.migrations = $migrations.Count
+    $info.stats.duration = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
+    $info.stats.Keys | % { log "  $(${_}.PadRight(15)) $($info.stats.$_)"}
 }
 
 function get-MigrationFiles() {
@@ -72,14 +73,12 @@ function get-MigrationFiles() {
     $info.migrations = foreach ($migration in $migrations) { 
        $f = $migration | ls -File -Recurse 
        if (!$script:config.Files) { continue }
-       if ($script:config.Files.Include) { $f = $f | ? FullName -like $script:config.Files.Include }
-       if ($script:config.Files.Exclude) { $f = $f | ? FullName -notlike $script:config.Files.Exclude }
+       if ($script:config.Files.Include) { $f = $f | ? Name -like $script:config.Files.Include }
+       if ($script:config.Files.Exclude) { $f = $f | ? Name -notlike $script:config.Files.Exclude }
 
+       $name  = Split-Path -Leaf $migration
        if ($f.Count -eq 0) { Write-Warning "Empty migration: $migration"; continue }
-       @{ 
-           name  = Split-Path -Leaf $migration
-           files = $f | Get-FileHash -Algorithm MD5 | select Path, Hash
-        }
+       $f | Get-FileHash -Algorithm MD5 | select @{ N='migration'; E={$name} }, Path, Hash
     } 
 }
 
@@ -111,16 +110,16 @@ function init_history($Handler) {
 function update_history($Handler) {
     $out, $err = $Handler.RunSql(@"
         UPDATE $history_table
-        SET Duration = '$($info.duration)', 
+        SET Duration = '$($info.stats.duration)', 
             Result = 'todo'
         WHERE RunId = $($info.RunId)
 "@)
     if ($err) {throw "Can't update history record: $err"}
-
 }
 
 function add_history ($Handler ) {
     function json($o) { ($o | ConvertTo-Json).Replace("'", "''") }
+    function csv($o)  { ($o | ConvertTo-Csv -NoTypeInformation).Replace("'", "''") | Out-String }
 
     $out, $err = $Handler.RunSql(@"
 INSERT INTO $history_table
@@ -129,8 +128,8 @@ VALUES(
      $($info.RunId),                        -- RunId
     '$($info.startDate.ToString("s"))',     -- StartDate
     '$( json $config )',                    -- Config
-    '$( json $info.migrations)',            -- Migrations
-    '$( json $info.Changes)')               -- Changes
+    '$( csv $info.migrations)',             -- Migrations
+    '$( csv $info.Changes)')                -- Changes
 "@)
     if ($err) {throw "Can't get history record: $err"}
 }
@@ -144,7 +143,24 @@ function get-Changes( $Handle ) {
         $info.RunId = 1
         log "No history found, all migrations will be applied"
         $info.changes = $info.migrations
+        return
     }
+
+    log "  previous run (no. $($out.RunId)) was at $($out.StartDate) and took $($out.Duration)"
+    $prev_migrations = $out.Migrations | ConvertFrom-Csv
+
+    $info.RunId = 1 + $out.RunId
+    $changes = Compare-Object -ReferenceObject $prev_migrations -DifferenceObject $info.migrations -Property Hash -PassThru
+    if (!$changes) { log "  no changes found, aborting"; exit }
+    $cc = $changes.Count
+    log "  found $cc changes"
+
+    $changes = $changes | ? { Test-Path $_.Path }
+    if (!$changes) { log "  only deletions found, aborting"; exit }
+    $cc2 = $changes.Count
+
+    log "  new/updated: $cc2  deleted: $($cc -$cc2)"
+    $info.changes = $changes
 }
 
 $module        = $MyInvocation.MyCommand.ScriptBlock.Module

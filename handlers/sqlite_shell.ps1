@@ -40,7 +40,7 @@ class sqlite_shell {
         $sqlFile = Join-Path $this.tmpdir "runsql.sql"
         [IO.File]::WriteAllLines($sqlFile, $Sql) # we don't want BOM
         $out, $err = $this.RunFile( $sqlFile )
-        if ($out) { $out = $out | ConvertFrom-CSV }
+        if ($out) { $out = $out | Out-String | ConvertFrom-CSV }
         return $out, $err
     }
 
@@ -49,6 +49,8 @@ class sqlite_shell {
     # Used with HistoryTable.
     [bool] TableExists( [string] $TableName ) {
         $_, $err= $this.RunSql( "select * from $TableName where 1=2" );
+        if (!$err) { return $true }
+
         return ($err -notlike '*no such table*')
     }
 }

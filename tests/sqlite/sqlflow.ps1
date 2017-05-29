@@ -1,3 +1,5 @@
+param ([switch] $Reset )
+
 $config = @{
     DateFormat     = 's'
     Handler        = 'sqlite_shell'
@@ -9,6 +11,10 @@ $config = @{
     Files = @{
         Include  = '*.sql'
         Exclude  = '~*'
+        #Match
+        #Notmatch
+        #FullInclude
+        #FullExclude
     }
 
     # Migrations = {
@@ -20,9 +26,11 @@ $config = @{
     }
 }
 
-
 #$VerbosePreference = 'continue'
 
 pushd $PSScriptRoot
 import-module -force ..\..\sqlflow.psm1
-Invoke-Flow -FlowConfig $config -Reset
+
+$params = @{ FlowConfig = $config }
+if ( $Reset ) { $params.Reset = $true }
+Invoke-Flow @params
