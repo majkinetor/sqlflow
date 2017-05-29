@@ -146,22 +146,27 @@ function get-Changes( $Handle ) {
         return
     }
 
-    log "  previous run (no. $($out.RunId)) was at $($out.StartDate) and took $($out.Duration)"
+    log "  previous run (no. $($out.RunId)) was at $($out.StartDate) and lasted $($out.Duration)"
     $prev_migrations = $out.Migrations | ConvertFrom-Csv
 
     $info.RunId = 1 + $out.RunId
     $changes = Compare-Object -ReferenceObject $prev_migrations -DifferenceObject $info.migrations -Property Hash -PassThru
+    $deletes = $changes | ? SideIndicator -eq '<=' | ? { !(Test-Path $_.Path)} | select * -Exclude SideIndicator
+    $changes = $changes | ? SideIndicator -eq '=>' | select * -Exclude SideIndicator
+    
+    $dc = $deletes | measure | % Count
+    $cc = $changes | measure | % Count
+
+    if ($deletes -and !$changes) { log "  only $dc deletions found, aborting"; exit } 
     if (!$changes) { log "  no changes found, aborting"; exit }
-    $cc = $changes.Count
-    log "  found $cc changes"
 
-    $changes = $changes | ? { Test-Path $_.Path }
-    if (!$changes) { log "  only deletions found, aborting"; exit }
-    $cc2 = $changes.Count
+    $cc2 = $changes | measure | % Count
 
-    log "  new/updated: $cc2  deleted: $($cc -$cc2)"
+    log "  changes: $($cc+$dc);  new/updated: $cc;  deleted: $dc"
     $info.changes = $changes
 }
+
+
 
 $module        = $MyInvocation.MyCommand.ScriptBlock.Module
 $history_table = '_sqlflow_history'
