@@ -23,7 +23,9 @@ class sqlcmd {
         $this.Password = $Connection.Password
         $this.Database = ($Connection.Database -as [string]).Trim()
         if ($Connection.Trusted -is [bool]) { $this.Trusted = $Connection.Trusted }
-        Write-Verbose "Using slcmd with database $($this.Server)\$($this.Database)"
+        
+        Write-Verbose "Using sqlcmd with database $($this.Server):$($this.Port)\$($this.Database)"
+        Write-Verbose ( if ($this.Trusted) { "Trusted connection" } else { "User: " + $this.Username } )
 
         mkdir -Force $this.tmpdir -ea 0 | Out-Null
     }
@@ -41,8 +43,8 @@ class sqlcmd {
         # Execute via cmd.exe as errors messages are cut in the middle without cmd.exe
         # This looks like Powershell 5 bug, should try in 6 if its resolved
         Write-Verbose "RunFile: $cmd"
-        $out = cmd.exe /C $cmd
-        $errors = gc $errorFile
+        $out = . $cmd
+        $errors = ''
         return $out, $errors
     }
 

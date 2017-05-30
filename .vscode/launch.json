@@ -13,10 +13,18 @@
         {
             "type": "PowerShell",
             "request": "launch",
-            "name": "Launch SQlite Test",
+            "name": "Launch Sqlite Test",
             "script": "${workspaceRoot}\\tests\\sqlite\\sqlflow.ps1",
             "args": [],
             "cwd": "${workspaceRoot}\\tests\\sqlite"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "Launch Sqlcmd Test",
+            "script": "${workspaceRoot}\\tests\\sqlcmd\\sqlflow.ps1",
+            "args": [],
+            "cwd": "${workspaceRoot}\\tests\\sqlcmd"
         },
         {
             "type": "PowerShell",

@@ -15,19 +15,30 @@ function Invoke-Flow {
     
     get-MigrationFiles
 
-    $csFirst = $config.Connections.Keys | select -First 1
-    if (!$csFirst) { throw "No connection found" }
-    $handler = New-Handler $config.Handler $config.Connections.$csFirst
-    if ( $Reset ) {  Write-Warning "Reseting database"; $handler.RemoveDatabase() }
-
-    ###############
-
+    init_connections
+    # if ( $Reset ) {  Write-Warning "Reseting database"; $handler.RemoveDatabase() }
     init_history $handler
     get-Changes $handler
 
     add_history $handler
     run-Files $handler
     update_history $handler
+}
+
+function init_connections() {
+    if ($config.Connections -isnot [System.Collections.Specialized.OrderedDictionary]) { throw "'Connections' must be ordered HashTable" }
+    if (!$config.Connections.Count) { throw 'At least one connection must be specified' }
+
+    $info.connections = [ordered]@{}
+    foreach ($k in $config.Connections.Keys) 
+    {
+        $c = $config.Connections.$k
+        if ( $c -is [string] ) { $c = @{ Database = $c} }
+        if ( $c -isnot [hashtable] ) { throw 'Connection must be of type Hashtable or string' }
+        if ( !$c.Handler ) { $c.Handler = $config.Handler }
+
+        $info.connections.$k = New-Connection $c
+    }
 }
 
 function set-Config([HashTable] $UserConfig) {
@@ -88,16 +99,17 @@ function get-MigrationFiles() {
     if ( !$info.migrations ) {throw 'No migration found'}
 }
 
-function New-Handler( [string]$Name, $Connection ) {
-    if ([string]::IsNullOrEmpty($Name)) { throw "Handler name can't be blank" }
-    Write-Verbose "New handler instance: $Name"
+function New-Connection( $Connection ) {
+    $handler = $Connection.Handler
+    if ([string]::IsNullOrEmpty($handler)) { throw "Handler must be specified" }
+    Write-Verbose "New connection instance: $handler"
 
-    $handler_script = "$PSScriptRoot\handlers\$Name.ps1"
-    if (!(Test-Path $handler_script )) { throw "Handler not found: $Name"}
+    $handler_script = "$PSScriptRoot\handlers\$handler.ps1"
+    if (!(Test-Path $handler_script )) { throw "Handler not found: $handler"}
 
     try { . $handler_script } catch { throw "Handler loading error: $_" }
 
-    iex "[$Name]::new( `$Connection )"
+    iex "[$handler]::new( `$Connection )"
 } 
 
 function log($msg, [switch] $Header, [switch] $NoNewLine ) {
