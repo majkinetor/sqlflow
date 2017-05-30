@@ -1,28 +1,42 @@
-class sqlite_shell {
-    [string] $DatabasePath
+class sqlcmd {
 
-    hidden [string] $tmpdir  = "$Env:TEMP/sqlflow/sqlite"
-    hidden [string] $exeName = 'sqlite3'
+    [string] $Server    = 'localhost'
+    [int]    $Port      = 1433
+    [string] $Username
+    [string] $Password
+    [string] $Database
+    [bool]   $Trusted   = $false
 
-    sqlite_shell( [string] $Connection ) {
+    hidden [string] $tmpdir  = "$Env:TEMP/sqlflow/sqlcmd"
+    hidden [string] $exeName = 'sqlcmd'
+
+    sqlcmd( [HashTable] $Connection ) {
         if (!(gcm $this.exeName -ea 0)) { throw "$($this.exeName) not found on the PATH" }
-        $this.DatabasePath = $Connection
-        Write-Verbose "Using sqlite_shell with database: $Connection"
+
+        if (!$Connection.Database) { 'throw Database must be specified' }
+        if ( ([string]::IsNullOrWhiteSpace($Connection.Username) -or [string]::IsNullOrWhiteSpace($Connection.Password)) `
+              -and !$Connection.Trusted) { throw 'Either username/password or trusted connection must be set'}
+              
+        if (![string]::IsNullOrWhiteSpace($Connection.Server)) { $this.Server = $Connection.Server.Trim() }
+        if (![string]::IsNullOrWhiteSpace($Connection.Port))   { $this.Port = $Connection.Port }
+        $this.Username = ($Connection.Username -as [string]).Trim()
+        $this.Password = $Connection.Password
+        $this.Database = ($Connection.Database -as [string]).Trim()
+        if ($Connection.Trusted -is [bool]) { $this.Trusted = $Connection.Trusted }
+        Write-Verbose "Using slcmd with database $($this.Server)\$($this.Database)"
 
         mkdir -Force $this.tmpdir -ea 0 | Out-Null
     }
 
     RemoveDatabase() {
-        rm $this.DatabasePath -ea 0
-        if (Test-Path $this.DatabasePath) { rm $this.DatabasePath }
     }
 
     # Run sql file on the connection
     # Return any output and errors in a array (out,err)
     [array] RunFile( [string] $SqlFilePath ) {
 
-        $errorFile = Join-Path $this.tmpdir "runfile.err"
-        $cmd = "{0} {1} "".read '{2}'"" 2>{3}" -f  $this.exeName, $this.DatabasePath, $SqlFilePath, $errorFile
+        $outFile = Join-Path $this.tmpdir "runfile.err"
+        $cmd = "{0} -S '{1},{2}' -i '{3}'" -f  $this.exeName, $this.Server, $this.Port, $this.DatabasePath, $SqlFilePath, $outFile
 
         # Execute via cmd.exe as errors messages are cut in the middle without cmd.exe
         # This looks like Powershell 5 bug, should try in 6 if its resolved
