@@ -1,9 +1,9 @@
 CREATE TABLE "_sqlflow_history" (
-	RunId	   INTEGER PRIMARY KEY DESC,
-	StartDate  varchar,
-	Duration   INTEGER,
-	Config     varchar,
-	Migrations varchar,
-	Changes    varchar,
-	Result	   varchar
+	RunId	   INT PRIMARY KEY,
+	StartDate  datetime2,
+	Duration   decimal,
+	Config     nvarchar(max),
+	Migrations nvarchar(max),
+	Changes    nvarchar(max),
+	Result	   nvarchar(max)
 );
