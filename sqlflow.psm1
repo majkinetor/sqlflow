@@ -38,12 +38,10 @@ function Invoke-SqlFile( [string] $SqlFilePath, [switch]$Throw ) {
         }
 
         if (!$opts.connection) { 
-            $opts.connection = $info.connections.Keys | select -First
+            $opts.connection = $info.connections.Keys | select -First 1
         } else {
-            if (! $info.connections.Contains( $opts.connection )) { throw "Connection '$($opts.connection)' not found: $SqlFilePath" }
-        
-    }
-
+            if (! $info.connections.Contains( $opts.connection )) { throw "Connection '$($opts.connection)' not found: $SqlFilePath" }    
+        }
         $opts
     }
 
@@ -72,6 +70,8 @@ function init_connections() {
 
         $info.connections.$k = New-Connection $c
     }
+
+    $info.defcon = $info.connections[ ($info.connections.Keys | select -First 1) ]  
 }
 
 function set-Config([HashTable] $UserConfig) {
@@ -165,7 +165,7 @@ function add_history ($Handler ) {
     function json($o) { ($o | ConvertTo-Json).Replace("'", "''") }
     function csv($o)  { ($o | ConvertTo-Csv -NoTypeInformation).Replace("'", "''") | Out-String }
 
-    $out, $err = $Handler.RunSql(@"
+    $out, $err = $info.defcon.RunSql(@"
 INSERT INTO $history_table
     (RunId, StartDate, Config, Migrations, Changes)
 VALUES( 

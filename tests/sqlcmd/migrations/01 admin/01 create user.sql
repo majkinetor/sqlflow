@@ -1,6 +1,6 @@
 -- sqlflow: connection: admin
 
-Use test;
+Use test
 GO
 
 CREATE LOGIN test
