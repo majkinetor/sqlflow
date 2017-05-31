@@ -1,4 +1,4 @@
-CREATE TABLE "_sqlflow_history" (
+CREATE TABLE IF NOT EXISTS "_sqlflow_history" (
 	RunId	   INTEGER PRIMARY KEY DESC,
 	StartDate  varchar,
 	Duration   INTEGER,
