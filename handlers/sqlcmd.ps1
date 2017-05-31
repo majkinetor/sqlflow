@@ -14,15 +14,17 @@ class sqlcmd {
         if (!(gcm $this.exeName -ea 0)) { throw "$($this.exeName) not found on the PATH" }
 
         if (!$Connection.Database) { 'throw Database must be specified' }
-        if ( ([string]::IsNullOrWhiteSpace($Connection.Username) -or [string]::IsNullOrWhiteSpace($Connection.Password)) `
-              -and !$Connection.Trusted) { throw 'Either username/password or trusted connection must be set'}
+        $sql_auth = !([string]::IsNullOrWhiteSpace($Connection.Username) -or [string]::IsNullOrWhiteSpace($Connection.Password))
+        if ( !$sql_auth -and !$Connection.Trusted) { throw 'Either username/password or trusted connection must be set'}
               
         if (![string]::IsNullOrWhiteSpace($Connection.Server)) { $this.Server = $Connection.Server.Trim() }
         if (![string]::IsNullOrWhiteSpace($Connection.Port))   { $this.Port = $Connection.Port }
         $this.Username = ($Connection.Username -as [string]).Trim()
         $this.Password = $Connection.Password
         $this.Database = ($Connection.Database -as [string]).Trim()
-        if ($Connection.Trusted -is [bool]) { $this.Trusted = $Connection.Trusted }
+        if ($Connection.Trusted -is [bool]) { $this.Trusted = $Connection.Trusted } else {
+            if (!$sql_auth) { $this.Trusted = $true }
+        }
         
         Write-Verbose "Using sqlcmd with database $($this.Server):$($this.Port)\$($this.Database)"
         Write-Verbose $( if ($this.Trusted) { "Trusted connection" } else { "User: " + $this.Username } )

@@ -75,6 +75,9 @@ function Invoke-SqlFile {
 
 ---
 
-Facts 
+# Facts 
 
-- Migration is a directory, set of migrations is ordered list of directories.
+- Sqloflow is driven by HashTable configuration with most options
+- Migration is a directory, set of migrations is ordered list of directories. List of migrations is found by looking at the subdirectories contained in the $config.Directories. There is one special migration 'sqlflow' that can be specified in any directory. If not specified defaults to 'migrations' directory in current folder of sqlflow.ps1 configuration.
+- Connections is a ordered list of named HashTables. First connection is the default one which is used if connection isn't specified some other way (file or directory options). The default connection is also used to manage history table. Connections use Handlers that implement various types of databases. The Handler can be specified in each connection or can be omitted in which case $config.Handler is used as a default one (to be used if all connections use the same handler). Multiple handlers can be used for some weird cases. Connection can also be a string in which case its converted to `@{ Database = 'string' }` hashtable as this can be enough to establish a connection in some cases (sqlite, local host with trusted settings as default, using defaults for username/pass etc. )
+- File options are specified inside SQL comment on the first line of the sql file.
