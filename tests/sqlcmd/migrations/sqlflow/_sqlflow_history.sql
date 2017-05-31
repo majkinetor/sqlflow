@@ -1,4 +1,5 @@
 IF not exists (select * from INFORMATION_SCHEMA.TABLES where TABLE_NAME='_sqlflow_history')
+BEGIN
 	CREATE TABLE "_sqlflow_history" (
 		RunId	   INT PRIMARY KEY,
 		StartDate  datetime2,
@@ -8,3 +9,5 @@ IF not exists (select * from INFORMATION_SCHEMA.TABLES where TABLE_NAME='_sqlflo
 		Changes    nvarchar(max),
 		Result	   nvarchar(max)
 	);
+	PRINT 'Created _sqlflow_history'
+END
