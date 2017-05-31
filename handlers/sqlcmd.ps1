@@ -25,25 +25,24 @@ class sqlcmd {
         if ($Connection.Trusted -is [bool]) { $this.Trusted = $Connection.Trusted }
         
         Write-Verbose "Using sqlcmd with database $($this.Server):$($this.Port)\$($this.Database)"
-        Write-Verbose ( if ($this.Trusted) { "Trusted connection" } else { "User: " + $this.Username } )
+        Write-Verbose $( if ($this.Trusted) { "Trusted connection" } else { "User: " + $this.Username } )
 
         mkdir -Force $this.tmpdir -ea 0 | Out-Null
-    }
-
-    RemoveDatabase() {
     }
 
     # Run sql file on the connection
     # Return any output and errors in a array (out,err)
     [array] RunFile( [string] $SqlFilePath ) {
 
-        $outFile = Join-Path $this.tmpdir "runfile.err"
-        $cmd = "{0} -S '{1},{2}' -i '{3}'" -f  $this.exeName, $this.Server, $this.Port, $this.DatabasePath, $SqlFilePath, $outFile
+        $outFile = Join-Path $this.tmpdir "runfile.txt"
+        $cmd = "{0} -S '{1},{2}' -d '{3}' -i '{4}' -o '{5}'" -f  $this.exeName, $this.Server, $this.Port, $this.Database, $SqlFilePath, $outFile
+
+        if ($this.Trusted) { $cmd += ' -E' } else { $cmd += " -U '{0}' -P '{1}'" -f $this.Username, $this.Password }
 
         # Execute via cmd.exe as errors messages are cut in the middle without cmd.exe
         # This looks like Powershell 5 bug, should try in 6 if its resolved
         Write-Verbose "RunFile: $cmd"
-        $out = . $cmd
+        $out = iex $cmd
         $errors = ''
         return $out, $errors
     }

@@ -9,5 +9,5 @@ BEGIN
 		Changes    nvarchar(max),
 		Result	   nvarchar(max)
 	);
-	PRINT 'Created _sqlflow_history'
+	PRINT 'Created table _sqlflow_history'
 END

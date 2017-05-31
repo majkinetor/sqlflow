@@ -1,4 +1,4 @@
-param ([switch] $Reset )
+param ([string] $AdminPass = 'test', [string] $UserPass = 'test', [switch] $Reset )
 
 $config = @{
     # DateFormat     = 's'
@@ -22,8 +22,8 @@ $config = @{
     # }
 
     Connections = [ordered]@{
-        test  = @{ Username = 'test'; Password = 'test'; Database = 'test'   }
-        admin = @{ Username = 'sa';   Password = 'test'; Database = 'master' }
+        user  = @{ Username = 'test'; Password = $UserPass;  Database = 'test'   }
+        admin = @{ Username = 'sa';   Password = $AdminPass; Database = 'master' }
     }
 }
 

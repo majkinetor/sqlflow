@@ -16,13 +16,46 @@ function Invoke-Flow {
     get-MigrationFiles
 
     init_connections
+    init_database
     # if ( $Reset ) {  Write-Warning "Reseting database"; $handler.RemoveDatabase() }
-    init_history $handler
-    get-Changes $handler
 
-    add_history $handler
-    run-Files $handler
-    update_history $handler
+    get-Changes
+
+    add_history
+    run-Files
+    update_history
+}
+
+function Invoke-SqlFile( [string] $SqlFilePath, [switch]$Throw ) {
+    function get-opts() {
+        $l = gc $SqlFilePath | select -First 1
+        
+        $opts=@{} 
+        $re_opt_marker = '^\s*--\s*\|sqlflow\|'
+        if ($l -match $re_opt_marker) { 
+            $l = $l -replace $re_opt_marker
+            $l -split ';' | % { $a = $_ -split ':'; $opts[ $a[0].Trim() ] = $a[1].Trim() } 
+        }
+
+        if (!$opts.connection) { 
+            $opts.connection = $info.connections.Keys | select -First
+        } else {
+            if (! $info.connections.Contains( $opts.connection )) { throw "Connection '$($opts.connection)' not found: $SqlFilePath" }
+        
+    }
+
+        $opts
+    }
+
+    $file_opts = get-opts
+    $conn = $info.connections[ $file_opts.connection ]
+    $conn.RunFile( $SqlFilePath )
+}
+
+function init_database() 
+{
+    Invoke-SqlFile (Join-Path $info.sqlflow_migration.FullName 'init_database.sql') -Throw
+    Invoke-SqlFile (Join-Path $info.sqlflow_migration.FullName 'init_history.sql')  -Throw
 }
 
 function init_connections() {
@@ -84,6 +117,7 @@ function get-MigrationFiles() {
 
     $migrations = . $config.Migrations
     $info.sqlflow_migration = $migrations | ? Name -eq 'sqlflow'
+
     $migrations = $migrations | ? Name -ne 'sqlflow'
     $info.migrations = foreach ($migration in $migrations) { 
        $f = $migration | ls -File -Recurse 
@@ -115,15 +149,6 @@ function New-Connection( $Connection ) {
 function log($msg, [switch] $Header, [switch] $NoNewLine ) {
     if ($Header) { $msg | Write-Host -ForegroundColor Blue; return }
     $msg | Write-Host
-}
-
-function init_history($Handler) {
-    if ( $Handler.TableExists( $script:history_table ) ) { return }
-
-    Write-Warning "History table doesn't exist, creating it"
-    if (!$info.sqlflow_migration) { throw "there is no 'sqlflow' migration" }
-    $_, $err = $Handler.RunFile( (Join-Path $info.sqlflow_migration '_sqlflow_history.sql') )
-    if ( $err ) { throw "Error creating history table: $err" }
 }
 
 function update_history($Handler) {
@@ -185,9 +210,7 @@ function get-Changes( $Handle ) {
     $info.changes = $changes
 }
 
-
-
 $module        = $MyInvocation.MyCommand.ScriptBlock.Module
 $history_table = '_sqlflow_history'
 
-Export-ModuleMember -Function 'Invoke-Flow', 'New-Handler'
+Export-ModuleMember -Function 'Invoke-Flow', 'New-Connection', 'Invoke-SqlFile'

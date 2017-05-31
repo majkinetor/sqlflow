@@ -1,4 +1,4 @@
--- sqlflow: connection: admin
+--|sqlflow| connection: admin
  
 IF NOT EXISTS(SELECT name FROM sys.databases WHERE name = 'test') 
     CREATE DATABASE test
