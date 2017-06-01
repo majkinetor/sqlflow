@@ -8,7 +8,7 @@ BEGIN
 	CREATE TABLE _sqlflow_history (
 		RunId	   INT PRIMARY KEY,
 		StartDate  nvarchar(50),
-		Duration   decimal,
+		Duration   decimal(18,2),
 		Migrations nvarchar(max),
 		Changes    nvarchar(max),
 		Result	   nvarchar(max)

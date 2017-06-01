@@ -108,7 +108,7 @@ function run-Files( $handler ) {
 
     log -Header "`nSummary"
     $info.stats.migrations = $migrations.Count
-    $info.stats.duration = ( (Get-Date) - $info.startDate ).TotalMinutes.ToString("#.##") + ' minutes'
+    $info.stats.duration = ( (Get-Date) - $info.startDate ).TotalMinutes
     $info.stats.Keys | % { log "  $(${_}.PadRight(15)) $($info.stats.$_)"}
 }
 
