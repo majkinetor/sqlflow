@@ -1,4 +1,4 @@
--- sqlflow: connection: admin
+--|sqlflow| connection: admin
 
 Use test
 GO

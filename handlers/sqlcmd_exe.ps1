@@ -36,7 +36,7 @@ class sqlcmd_exe {
     [array] RunFile( [string] $SqlFilePath ) {
 
         $outFile = Join-Path $this.tmpdir "runfile.txt"
-        $cmd = "{0} -S '{1},{2}' -d '{3}' -i '{4}' -o '{5}' -y0 -j" -f  $this.exeName, $this.Server, $this.Port, $this.Database, $SqlFilePath, $outFile
+        $cmd = "{0} -S '{1},{2}' -d '{3}' -i '{4}' -o '{5}' -y0" -f  $this.exeName, $this.Server, $this.Port, $this.Database, $SqlFilePath, $outFile
 
         if ($this.Trusted) { $cmd += ' -E' } else { $cmd += " -U '{0}' -P '{1}'" -f $this.Username, $this.Password }
 

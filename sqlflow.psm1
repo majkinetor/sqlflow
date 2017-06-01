@@ -96,7 +96,7 @@ function run-Files( $handler ) {
         {
             $file_path = $m.group[$i-1].Path         
             log ('{0}/{1} {2}' -f "$i".PadLeft(3), "$($m.Count)".PadRight(3), $file_path)
-            $out, $err = $handler.RunFile( $file_path )
+            $out, $err = Invoke-SqlFile $file_path
             if ($err.Count) { @("Errors: $($err.Count)") + $err | Write-Warning }
             $migration_errors += $err.Count
             $out
@@ -152,13 +152,12 @@ function log($msg, [switch] $Header, [switch] $NoNewLine ) {
 }
 
 function update_history($Handler) {
-    $out, $err = $Handler.RunSql(@"
+     $info.defcon.RunSql("
         UPDATE $history_table
         SET Duration = '$($info.stats.duration)', 
-            Result = 'todo'
+            Result   = 'todo'
         WHERE RunId = $($info.RunId)
-"@)
-    if ($err) {throw "Can't update history record: $err"}
+    ")
 }
 
 function add_history ($Handler ) {
