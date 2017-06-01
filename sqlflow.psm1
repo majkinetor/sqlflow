@@ -162,33 +162,42 @@ function update_history($Handler) {
 }
 
 function add_history ($Handler ) {
-    function json($o) { ($o | ConvertTo-Json).Replace("'", "''") }
-    function csv($o)  { ($o | ConvertTo-Csv -NoTypeInformation).Replace("'", "''") | Out-String }
+    function bjson($o) { base64 ($o | ConvertTo-Json) -Encode }
 
-    $out, $err = $info.defcon.RunSql(@"
-INSERT INTO $history_table
-    (RunId, StartDate, Config, Migrations, Changes)
-VALUES( 
-     $($info.RunId),                        -- RunId
-    '$($info.startDate.ToString("s"))',     -- StartDate
-    '$( json $config )',                    -- Config
-    '$( csv $info.migrations)',             -- Migrations
-    '$( csv $info.Changes)')                -- Changes
-"@)
-    if ($err) {throw "Can't get history record: $err"}
+    $iso_date = $info.startDate.ToString("O") -replace '\.\d+'
+    $info.defcon.RunSql("
+        INSERT INTO $history_table
+                (RunId, StartDate, Migrations, Changes, Result)
+        VALUES( $($info.RunId), '$iso_date', '$( bjson $info.migrations)', '$( bjson $info.Changes)', '' )
+    ")
 }
 
 function get-Changes( $Handle ) {
 
+    function get_migration_row($string_row) {
+        $out = @{}
+        $history_cols = 'RunId', 'StartDate', 'Duration', 'Migrations', 'Changes', 'Result'
+        $string_row.Split(' ') | % {$i=0} { $out[ $history_cols[$i++] ] = $_ }
+        if ($history_cols.Count -ne $out.Count) {throw "$($info.history_table) - wrong number of columns"}
+        
+        $out.StartDate  = [datetime]::Parse($out.StartDate)
+        $out.Migrations = base64 $out.Migrations -Decode | ConvertFrom-Json
+        $out.Changes    = base64 $out.Changes -Decode | ConvertFrom-Json 
+        $out.Result     = base64 $out.Result -Decode
+
+        $out
+    }
+
     log "Getting history"
-    $out, $err = $Handler.RunSql( ('select * from {0} where RunId = (select max(RunId) from {0})' -f $history_table) )
-    if ($err) {throw "Can't get history record: $err"}
-    if (!$out) { 
+    $res = $info.defcon.RunSql( ('select * from {0} where RunId = (select max(RunId) from {0})' -f $history_table) )
+    if (!$res) { 
         $info.RunId = 1
         log "No history found, all migrations will be applied"
         $info.changes = $info.migrations
         return
     }
+
+    $out = get_migration_row $res
 
     log "  previous run (no. $($out.RunId)) was at $($out.StartDate) and lasted $($out.Duration)"
     $prev_migrations = $out.Migrations | ConvertFrom-Csv
@@ -208,6 +217,11 @@ function get-Changes( $Handle ) {
 
     log "  changes: $($cc+$dc);  new/updated: $cc;  deleted: $dc"
     $info.changes = $changes
+}
+
+function base64([string] $String, [switch] $Encode, [switch] $Decode ) {
+    if ($Encode) { [System.Convert]::ToBase64String( [System.Text.Encoding]::UTF8.GetBytes($String) )   }
+    if ($Decode) { [System.Text.Encoding]::UTF8.GetString( [System.Convert]::FromBase64String($String)) }
 }
 
 $module        = $MyInvocation.MyCommand.ScriptBlock.Module
