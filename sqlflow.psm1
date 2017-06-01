@@ -199,7 +199,7 @@ function get-Changes( $Handle ) {
     $out = get_migration_row $res
 
     log "  previous run (no. $($out.RunId)) was at $($out.StartDate) and lasted $($out.Duration)"
-    $prev_migrations = $out.Migrations | ConvertFrom-Csv
+    $prev_migrations = $out.Migrations
 
     $info.RunId = 1 + $out.RunId
     $changes = Compare-Object -ReferenceObject $prev_migrations -DifferenceObject $info.migrations -Property Hash -PassThru

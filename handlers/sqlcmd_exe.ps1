@@ -45,7 +45,7 @@ class sqlcmd_exe {
         Write-Verbose "RunFile: $cmd"
         iex $cmd
         $out    = gc $outFile
-        $errors = ''
+        $errors = $out | sls 'msg .+, level .+, line' -Context 0,1
         return $out, $errors
     }
 
