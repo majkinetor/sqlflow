@@ -99,7 +99,6 @@ function run-Files( $handler ) {
             $out, $err = Invoke-SqlFile $file_path
             if ($err.Count) { @("Errors: $($err.Count)") + $err | Write-Warning }
             $migration_errors += $err.Count
-            $out
         }
         log -Header ( "Finished migration '{0}' after {1:f2} minutes - errors: {2}" -f $m.Name, ((Get-Date)-$start).TotalMinutes, $migration_errors)
         $info.stats.files  += $m.Count

@@ -1,9 +1,9 @@
 --|sqlflow| connection: admin
 
--- :setvar SQLCMDERRORLEVEL 1 -- Disable message for next USE command
---     Use test
---     GO
--- :setvar SQLCMDERRORLEVEL 0
+:setvar SQLCMDERRORLEVEL 1 -- Disable message for next USE command
+    Use test
+    GO
+:setvar SQLCMDERRORLEVEL 0
 
 IF NOT EXISTS (SELECT * FROM master.sys.server_principals WHERE name = 'test')
 BEGIN
