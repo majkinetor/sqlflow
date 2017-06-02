@@ -2,7 +2,7 @@ param ([string] $AdminPass = 'test', [string] $UserPass = 'test', [switch] $Rese
 
 $config = @{
     # DateFormat     = 's'
-    Handler = 'sqlcmd_exe'
+    Handler = 'sqlcmd'
 
     # Directories = @(
     #     'migrations'

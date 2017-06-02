@@ -5,5 +5,4 @@ CREATE TABLE [dbo].[Orders](
     [OriginState] [nvarchar](2) NOT NULL, 
     
     CONSTRAINT [PK_Orders] PRIMARY KEY CLUSTERED ([OrderID] ASC,[ProductID] ASC) 
-) 
-GO
+)

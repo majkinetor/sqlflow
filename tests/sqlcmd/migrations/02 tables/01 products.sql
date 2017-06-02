@@ -4,5 +4,4 @@ CREATE TABLE [dbo].[Products](
     [ListPrice] [money] NOT NULL
  
     CONSTRAINT [PK_Products] PRIMARY KEY CLUSTERED ([ID] ASC) 
-) 
-GO
+)

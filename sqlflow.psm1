@@ -113,7 +113,7 @@ function run-Files( $handler ) {
 }
 
 function get-MigrationFiles() {
-    log "Setting up migrations"
+    log "Getting all available migrations"
 
     $migrations = . $config.Migrations
     $info.sqlflow_migration = $migrations | ? Name -eq 'sqlflow'
@@ -167,7 +167,7 @@ function add_history ($Handler ) {
     $info.defcon.RunSql("
         INSERT INTO $history_table
                 (RunId, StartDate, Migrations, Changes, Result)
-        VALUES( $($info.RunId), '$iso_date', '$( bjson $info.migrations)', '$( bjson $info.Changes)', '' )
+        VALUES( $($info.RunId), '$iso_date', '$( bjson $info.migrations)', '$( bjson $info.Changes)', NULL )
     ")
 }
 
