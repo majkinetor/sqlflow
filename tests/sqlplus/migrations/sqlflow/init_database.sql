@@ -18,4 +18,4 @@ BEGIN
     GRANT ALTER SYSTEM TO test;
   END IF;
 END;
-
+/
