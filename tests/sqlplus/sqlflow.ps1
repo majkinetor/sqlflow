@@ -35,8 +35,8 @@ $config = @{
     }
 
     Connections = [ordered]@{
-        user  = @{ ConnString = "$User/$Password@${Hostname}:$Port/$Sid"   }
-        admin = @{ ConnString = "$AdminUser/$AdminPassword@${Hostname}:$Port/$Sid as Sysdba" }
+        user  = "$User/$Password@${Hostname}:$Port/$Sid"
+        admin = "$AdminUser/$AdminPassword@${Hostname}:$Port/$Sid as Sysdba"
     }
 }
 

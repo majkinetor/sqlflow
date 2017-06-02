@@ -1,21 +1,34 @@
-function Invoke-SqlFile {
-    param(
-        # SQL file to invoke
-        [System.IO.FileSystemInfo] $File,
-        
-        # Arguments to the script
-        [string[]] $Arguments,
-        
-        # Connection object
-        $Connection
+class sqlplus {
 
-    )
+    [string] $ConnString
 
-    $connString =  if ($AsAdmin) { $adminConnString } else { $userConnString }
-    $out = "@$($File.FullName) $Arguments" | sqlplus $connString
-    $out >> setup.log #Do not display this on screen only in log
+    hidden [string] $tmpdir  = "$Env:TEMP/sqlflow/sqlplus"
 
-    $errors = $out | Select-String  "SP2-","ORA-"
-    $global:err_no += $errors.count
-    if ($errors) { $OFS="`n"; Write-Verbose "$(@('ERRORS') + $errors)"  }
+    sqlplus( [HashTable] $Connection ) {
+        if (!(gcm $this.exeName -ea 0)) { throw "sqlplus not found on the PATH" }
+
+        $this.ConnString = $Connection.Database
+        Write-Verbose "Using sqlplus"
+        mkdir -Force $this.tmpdir -ea 0 | Out-Null
+    }
+
+    # Run sql file on the connection
+    # Return any output and errors in a array (out,err)
+    [array] RunFile( [string] $SqlFilePath ) {
+        $out = "@$SqlFilePath $Arguments" | sqlplus $this.ConnString
+        $errors = $out | Select-String  "SP2-","ORA-"
+        return $out, $errors
+    }
+
+    # Runs migration history table sql on the connection. Used to insert/update history table.
+    # Rows are separated by new lines and columns by spaces. There are no spaces in values.
+    # No header should be present.
+    # Throws on any error.
+    [string] RunSql ( [string] $Sql ) {
+        $sqlFile = Join-Path $this.tmpdir "runsql.sql"
+        [IO.File]::WriteAllLines($sqlFile, $Sql) # we don't want BOM
+        $out, $err = $this.RunFile( $sqlFile )
+        if ($err) { throw "Migration history error: $err" }
+        return $out
+    }
 }

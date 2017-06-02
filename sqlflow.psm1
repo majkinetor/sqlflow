@@ -120,9 +120,14 @@ function get-MigrationFiles() {
     $migrations = $migrations | ? Name -ne 'sqlflow'
     $info.migrations = foreach ($migration in $migrations) { 
        $f = $migration | ls -File -Recurse 
-       if (!$script:config.Files) { continue }
-       if ($script:config.Files.Include) { $f = $f | ? Name -like $script:config.Files.Include }
-       if ($script:config.Files.Exclude) { $f = $f | ? Name -notlike $script:config.Files.Exclude }
+       if (!$config.Files) { continue }
+      
+       if ($config.Files.Include) { 
+           $f = foreach( $a in $f ) { foreach($g in $config.Files.Include) { if ($a -like $g) { $a; break } } }
+       }
+       if ($config.Files.Exclude) { 
+           $f = foreach( $a in $f ) { $j=0; foreach($g in $config.Files.Exclude) { if ($a -like $g) { $j++; break } }; if(!$j) {$a}  }
+       }
 
        $name  = Split-Path -Leaf $migration
        if ($f.Count -eq 0) { Write-Warning "Empty migration: $migration"; continue }
