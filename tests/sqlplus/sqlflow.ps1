@@ -16,8 +16,8 @@ $config = @{
         'migrations'
         'c:\Work\isib\Trezor\model\DDL'
         'c:\Work\isib\Trezor\model\DML'
-        'c:\Work\isib\Trezor\Pathces'
-        'c:\Work\isib\Trezor\source\TrezorMaster\TrezorPlsql\src\rs\saga\trezor\plsql'
+        #'c:\Work\isib\Trezor\Pathces'
+        #'c:\Work\isib\Trezor\source\TrezorMaster\TrezorPlsql\src\rs\saga\trezor\plsql'
         'c:\Work\isib\Trezor\model\COMPILE'
     )
 

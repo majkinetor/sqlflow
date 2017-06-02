@@ -5,7 +5,7 @@ class sqlplus {
     hidden [string] $tmpdir  = "$Env:TEMP/sqlflow/sqlplus"
 
     sqlplus( [HashTable] $Connection ) {
-        if (!(gcm $this.exeName -ea 0)) { throw "sqlplus not found on the PATH" }
+        if (!(gcm sqlplus -ea 0)) { throw "sqlplus not found on the PATH" }
 
         $this.ConnString = $Connection.Database
         Write-Verbose "Using sqlplus"
@@ -15,7 +15,8 @@ class sqlplus {
     # Run sql file on the connection
     # Return any output and errors in a array (out,err)
     [array] RunFile( [string] $SqlFilePath ) {
-        $out = "@$SqlFilePath $Arguments" | sqlplus $this.ConnString
+        $out = "@$SqlFilePath" | sqlplus -s $this.ConnString
+        $out = $out | ? {$_}    #remove blank lines in output
         $errors = $out | Select-String  "SP2-","ORA-"
         return $out, $errors
     }

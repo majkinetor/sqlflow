@@ -47,13 +47,14 @@ function Invoke-SqlFile( [string] $SqlFilePath, [switch]$Throw ) {
 
     $file_opts = get-opts
     $conn = $info.connections[ $file_opts.connection ]
-    $conn.RunFile( $SqlFilePath )
+    $out, $err = $conn.RunFile( $SqlFilePath )
+    if ($err.Count) { throw $err }
 }
 
 function init_database() 
 {
-    Invoke-SqlFile (Join-Path $info.sqlflow_migration.FullName 'init_database.sql') -Throw
-    Invoke-SqlFile (Join-Path $info.sqlflow_migration.FullName 'init_history.sql')  -Throw
+    $out = Invoke-SqlFile (Join-Path $info.sqlflow_migration.FullName 'init_database.sql') -Throw
+    $out = Invoke-SqlFile (Join-Path $info.sqlflow_migration.FullName 'init_history.sql')  -Throw
 }
 
 function init_connections() {
